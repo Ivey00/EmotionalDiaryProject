@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto p-8">
+    <h2 class="text-2xl font-semibold mb-6">Nouvelle Entrée</h2>
+    
+    <!-- Message d'erreur -->
+    <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <span class="block sm:inline"></span>
+    </div>
+    
+    <!-- Zone de texte -->
+    <textarea 
+        id="journal-text" 
+        class="w-full p-4 border rounded-lg mb-4 h-32" 
+        placeholder="Comment vous sentez-vous aujourd'hui ?"
+        maxlength="1000"
+    ></textarea>
+    
+    <!-- Compteur de caractères -->
+    <div class="text-right text-sm text-gray-500 mb-4">
+        <span id="char-count">0</span>/1000 caractères
+    </div>
+    
+    <!-- Bouton d'analyse -->
+    <button 
+        id="analyze-btn" 
+        class="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-300"
+    >
+        Analyser mes émotions
+    </button>
+    
+    <!-- Zone de résultats -->
+    <div id="results" class="mt-8 hidden">
+        <h3 class="text-xl font-semibold mb-4">Analyse des émotions</h3>
+        
+        <!-- Graphique circulaire -->
+        <div class="mb-8">
+            <canvas id="emotionsChart" width="200" height="200"></canvas>
+        </div>
+        
+        <!-- Liste des émotions et conseils -->
+        <div id="emotions-list" class="space-y-6">
+            <!-- Results will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Variables globales
+const journalText = document.getElementById('journal-text');
+const charCount = document.getElementById('char-count');
+const analyzeBtn = document.getElementById('analyze-btn');
+const results = document.getElementById('results');
+const emotionsList = document.getElementById('emotions-list');
+const errorMessage = document.getElementById('error-message');
+let emotionsChart = null;
+
+// Mise à jour du compteur de caractères
+journalText.addEventListener('input', () => {
+    const count = journalText.value.length;
+    charCount.textContent = count;
+});
+
+// Fonction d'affichage des erreurs
+function showError(message) {
+    errorMessage.querySelector('span').textContent = message;
+    errorMessage.classList.remove('hidden');
+    setTimeout(() => {
+        errorMessage.classList.add('hidden');
+    }, 5000);
+}
+
+// Gestionnaire du clic sur le bouton d'analyse
+analyzeBtn.addEventListener('click', async () => {
+    const text = journalText.value.trim();
+    
+    // Validation côté client
+    if (!text) {
+        showError('Veuillez entrer du texte avant d\'analyser');
+        return;
+    }
+    
+    // Désactiver le bouton pendant l'analyse
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analyse en cours...';
+    errorMessage.classList.add('hidden');
+    
+    try {
+        // Envoi de la requête d'analyse
+        const response = await fetch('/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text }),
+        });
+        
+        // Gestion des erreurs de la requête
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Une erreur est survenue');
+        }
+        
+        const data = await response.json();
+        
+        // Mise à jour du graphique
+        if (emotionsChart) {
+            emotionsChart.destroy();
+        }
+        
+        const ctx = document.getElementById('emotionsChart').getContext('2d');
+        emotionsChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.emotions.map(e => e.name),
+                datasets: [{
+                    data: data.emotions.map(e => e.score * 100),
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // Mise à jour de la liste des émotions et conseils
+        emotionsList.innerHTML = data.emotions.map(emotion => `
+            <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                <div class="flex justify-between mb-3">
+                    <span class="font-medium text-lg">${emotion.name} ${emotion.emoji}</span>
+                    <span class="font-medium">${(emotion.score * 100).toFixed(0)}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                    <div class="bg-blue-600 h-2 rounded-full" 
+                         style="width: ${emotion.score * 100}%"></div>
+                </div>
+                <div class="mt-4 text-gray-700">
+                    <p class="italic">${emotion.conseil}</p>
+                </div>
+            </div>
+        `).join('');
+        
+        // Afficher les résultats
+        results.classList.remove('hidden');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showError(error.message);
+    } finally {
+        // Réactiver le bouton
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = 'Analyser mes émotions';
+    }
+});
+</script>
+{% endblock %}

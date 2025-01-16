@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold text-center text-blue-600 mb-6">Tableau de Bord des Emotions</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Indicateurs -->
+        <div class="bg-yellow-100 p-4 rounded-lg shadow">
+            <h2 class="text-xl font-semibold text-yellow-700">Emotion dominante</h2>
+            <p id="main-emotion" class="text-2xl font-bold">...</p>
+        </div>
+
+        <div class="bg-green-100 p-4 rounded-lg shadow">
+            <h2 class="text-xl font-semibold text-green-700">Nombre total d'analyses</h2>
+            <p id="total-analyses" class="text-2xl font-bold">...</p>
+        </div>
+
+        <div class="bg-blue-100 p-4 rounded-lg shadow">
+            <h2 class="text-xl font-semibold text-blue-700">Emotion la plus positive</h2>
+            <p id="positive-emotion" class="text-2xl font-bold">...</p>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="mt-10">
+        <canvas id="emotion-trend-chart" class="mb-6"></canvas>
+        <canvas id="emotion-distribution-chart"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const response = await fetch('/api/dashboard-data');
+            const data = await response.json();
+
+            // Mise à jour des indicateurs
+            document.getElementById('main-emotion').innerText = data.main_emotion;
+            document.getElementById('total-analyses').innerText = data.total_analyses;
+            document.getElementById('positive-emotion').innerText = data.positive_emotion;
+
+            // Graphique des tendances
+            const trendCtx = document.getElementById('emotion-trend-chart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: data.trend.labels,
+                    datasets: data.trend.datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Tendance des Emotions au Fil du Temps'
+                        }
+                    }
+                }
+            });
+
+            // Graphique de distribution
+            const distributionCtx = document.getElementById('emotion-distribution-chart').getContext('2d');
+            new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.distribution.labels,
+                    datasets: [{
+                        data: data.distribution.data,
+                        backgroundColor: [
+                            '#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribution des Emotions'
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des données du tableau de bord:', error);
+        }
+    });
+</script>
+{% endblock %}
