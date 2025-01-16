@@ -1,0 +1,69 @@
+pip install pymongo
+pip install streamlit
+pip install pyqt5
+pip install pyspark
+pip install textblob
+pip install nltk
+pip install transformers
+pip install spacy
+pip install datasets
+pip install flask
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
