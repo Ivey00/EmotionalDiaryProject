@@ -7,7 +7,6 @@ Ce projet vise à développer une application intégrant le traitement automatiq
 L'application utilise Flask comme framework principal pour l'interface web et MongoDB pour la gestion de la base de données, assurant ainsi flexibilité, évolutivité et facilité de traitement et de stockage des données utilisateur.
 
 ## Vidéo de Démonstration
-![image](https://github.com/user-attachments/assets/44c0dd12-fa72-46d8-975d-7ce0f8e44243)
 ![image](https://github.com/user-attachments/assets/ad179d9c-585e-43b2-a8fc-5b3979bd2bd3)
 
 Vous pouvez visionner une démonstration de l'application en ouvrant le fichier vidéo disponible dans le projet.
